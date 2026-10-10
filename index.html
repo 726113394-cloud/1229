@@ -931,6 +931,199 @@
         }
         #matchToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+        /* ===== 重置按钮：挪到顶栏右侧，离「下一题」越远越好 =====
+           原来它紧贴在「下一题」正下方、同宽同列，学生伸手点下一题时
+           很容易点到它，一下就把整轮分数清零。 */
+        .stats-bar .reset-btn {
+            width: auto;
+            margin: 0;
+            padding: 8px 16px;
+            min-height: 40px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            background: #eef2f7;
+            color: #4a5b73;
+            border: 1px solid #d5dde8;
+            border-radius: 40px;
+            box-shadow: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .stats-bar .reset-btn:hover { background: #e2e8f0; color: #2b3a52; transform: translateY(-1px); }
+        /* 第一次点击只是「上膛」，按钮变色并提示再点一次 */
+        .stats-bar .reset-btn.arming,
+        .pk-reset-btn.arming {
+            background: #ffe1d6 !important;
+            border-color: #f5a98c !important;
+            color: #a3401f !important;
+            /* 只闪两下就停，而且只动 box-shadow：
+               用 transform: scale + infinite 会一直改元素盒子，
+               既晃眼，也会让「等待元素稳定再点」的自动化验收点不准。 */
+            animation: armPulse 0.6s ease-in-out 2;
+        }
+        [data-glass="enabled"] .stats-bar .reset-btn {
+            background: rgba(255, 255, 255, 0.24);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: #12294a;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+        }
+        [data-glass="enabled"] .stats-bar .reset-btn:hover { background: rgba(255, 255, 255, 0.42); }
+
+        /* PK 的重置也拉远一点，别挨着「开始新对局」 */
+        .pk-reset-btn { margin-left: auto; }
+        @media (min-width: 801px) {
+            .pk-reset-btn { padding-left: 20px; border-left: 1px solid rgba(0,0,0,0.08); border-radius: 0 40px 40px 0; }
+        }
+
+        @keyframes armPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245, 130, 90, 0.55); }
+            50% { box-shadow: 0 0 0 9px rgba(245, 130, 90, 0); }
+        }
+
+        /* ===== 动效升级 ===== */
+        /* 点哪儿从哪儿荡开一圈水波（触摸屏上反馈最"实"） */
+        .option,
+        .pk-option,
+        button { position: relative; overflow: hidden; }
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--ripple, rgba(79, 131, 245, 0.28));
+            transform: scale(0);
+            opacity: 1;
+            pointer-events: none;
+            animation: rippleGo 0.55s ease-out forwards;
+        }
+        @keyframes rippleGo {
+            from { transform: scale(0); opacity: 1; }
+            to { transform: scale(1); opacity: 0; }
+        }
+        .next-btn { --ripple: rgba(255, 255, 255, 0.45); }
+        .pk-start-btn,
+        .pk-reset-btn,
+        .add-player-btn,
+        .select-words-btn,
+        .word-select-actions button,
+        .word-select-footer button { --ripple: rgba(255, 255, 255, 0.5); }
+        [data-glass="enabled"] { --ripple: rgba(255, 255, 255, 0.5); }
+
+        /* 光标扫过时一道高光斜着滑过去，玻璃感的关键一笔 */
+        .option::after,
+        .pk-option::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: 0;
+            background: linear-gradient(112deg,
+                rgba(255, 255, 255, 0) 32%,
+                rgba(255, 255, 255, 0.55) 46%,
+                rgba(255, 255, 255, 0.18) 54%,
+                rgba(255, 255, 255, 0) 68%);
+            background-size: 280% 100%;
+            background-position: 150% 0;
+            transition: background-position 0.7s ease, opacity 0.25s ease;
+        }
+        .option:hover:not(.disabled)::after,
+        .pk-option:hover::after {
+            opacity: 1;
+            background-position: -50% 0;
+        }
+        [data-glass="enabled"] .option::after,
+        [data-glass="enabled"] .pk-option::after {
+            background: linear-gradient(112deg,
+                rgba(255, 255, 255, 0) 30%,
+                rgba(255, 255, 255, 0.75) 46%,
+                rgba(255, 255, 255, 0.25) 55%,
+                rgba(255, 255, 255, 0) 70%);
+            background-size: 280% 100%;
+            background-position: 150% 0;
+        }
+
+        /* 得分飘字：+1 从分数旁边飘起来，比只跳个数字清楚 */
+        .score-box,
+        .pk-score { position: relative; }
+        .float-badge {
+            position: absolute;
+            right: 2px;
+            top: 40%;
+            font-weight: 800;
+            font-size: 1rem;
+            pointer-events: none;
+            animation: floatUp 0.85s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+        }
+        .float-badge.good { color: #2e9e5b; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7); }
+        .float-badge.bad { color: #d1493f; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7); }
+        @keyframes floatUp {
+            0% { opacity: 0; transform: translateY(4px) scale(0.8); }
+            25% { opacity: 1; transform: translateY(-4px) scale(1.12); }
+            100% { opacity: 0; transform: translateY(-28px) scale(1); }
+        }
+        .score-box.bump { animation: scoreBump 0.42s cubic-bezier(0.34, 1.4, 0.64, 1); }
+        @keyframes scoreBump {
+            0% { transform: scale(1); }
+            45% { transform: scale(1.09); }
+            100% { transform: scale(1); }
+        }
+
+        /* 开题时整张题卡轻轻浮一下 */
+        .question-card.q-lift { animation: cardLift 0.4s cubic-bezier(0.34, 1.15, 0.64, 1); }
+        @keyframes cardLift {
+            0% { transform: scale(0.992); }
+            55% { transform: scale(1.004); }
+            100% { transform: scale(1); }
+        }
+
+        /* 首屏：整张卡片淡入上浮 */
+        .app-container { animation: appIn 0.5s cubic-bezier(0.34, 1.1, 0.64, 1) both; }
+        @keyframes appIn {
+            from { opacity: 0; transform: translateY(16px) scale(0.992); }
+            to { opacity: 1; transform: none; }
+        }
+
+        /* PK 计时器底部一条进度条，随时间平滑缩短 */
+        .pk-timer { position: relative; }
+        .pk-timer::after {
+            content: '';
+            position: absolute;
+            left: 14px;
+            right: 14px;
+            bottom: 5px;
+            height: 3px;
+            border-radius: 3px;
+            background: currentColor;
+            opacity: 0.3;
+            transform-origin: left center;
+            transform: scaleX(var(--t, 1));
+            transition: transform 1s linear;
+        }
+
+        /* 高级渲染：背景里一团很慢的光在漂，玻璃才有"活"的感觉
+           （纯 transform 动画，走合成层，不会触发重绘/重算模糊） */
+        [data-glass="enabled"] body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(38% 34% at 28% 26%,
+                rgba(255, 255, 255, 0.60) 0%,
+                rgba(255, 255, 255, 0.20) 45%,
+                rgba(255, 255, 255, 0) 72%);
+            animation: drift 26s ease-in-out infinite alternate;
+        }
+        @keyframes drift {
+            from { transform: translate3d(-8%, -5%, 0) scale(1); }
+            to { transform: translate3d(9%, 7%, 0) scale(1.18); }
+        }
+
+        /* 选中/按下的即时反馈压在最后，别被 hover 抢走 */
+        .option:active:not(.disabled)::after,
+        .pk-option:active::after { opacity: 0.6; }
+
         /* ===== 低配档位 / 系统减弱动效 ===== */
         [data-perf="low"][data-glass="enabled"] .rank-card,
         [data-perf="low"][data-glass="enabled"] .word-select-card {
@@ -947,6 +1140,9 @@
         [data-perf="low"] .pk-option {
             transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
         }
+        [data-perf="low"] .option::after,
+        [data-perf="low"] .pk-option::after { display: none; }
+        [data-perf="low"][data-glass="enabled"] body::before { animation: none; }
 
         @media (prefers-reduced-motion: reduce) {
             .question-text.q-in,
@@ -960,14 +1156,25 @@
             .pk-player.correct-flash,
             .pk-player.wrong-flash,
             .pk-timer.urgent,
-            .question-pop {
+            .question-pop,
+            .ripple,
+            .float-badge,
+            .score-box.bump,
+            .question-card.q-lift,
+            .app-container,
+            .stats-bar .reset-btn.arming,
+            .pk-reset-btn.arming {
                 animation: none !important;
             }
+            [data-glass="enabled"] body::before { animation: none !important; }
             .option,
             .next-btn,
             .reset-btn,
             .pk-option,
             .app-container,
+            .option::after,
+            .pk-option::after,
+            .pk-timer::after,
             #matchToast {
                 transition: none !important;
             }
@@ -991,14 +1198,17 @@
 
     <!-- 单人模式 -->
     <div id="singleMode" class="single-mode">
-        <div class="stats-bar"><span class="score-box">⭐ 得分: <span id="scoreValue">0</span></span><span class="counter-box">📊 已答: <span id="answeredCount">0</span> 题</span></div>
+        <div class="stats-bar">
+            <span class="score-box">⭐ 得分: <span id="scoreValue">0</span></span>
+            <span class="counter-box">📊 已答: <span id="answeredCount">0</span> 题</span>
+            <button class="reset-btn" id="resetBtn" data-label="🔄 重来" title="分数清零并重新洗牌">🔄 重来</button>
+        </div>
         <div class="question-card">
             <div class="question-text" id="questionDisplay">loading...</div>
             <div class="options-list" id="optionsArea"></div>
             <div class="feedback" id="feedbackMsg">✨ 所有单词将不重复出现，一轮完成后重置 ✨</div>
             <div class="buttons-area">
                 <button class="next-btn" id="nextBtn">➡ 下一题 / 继续挑战</button>
-                <button class="reset-btn" id="resetBtn">🔄 重置分数 & 重新洗牌</button>
             </div>
         </div>
     </div>
@@ -1011,7 +1221,7 @@
             <input type="number" id="targetScoreInput" class="target-input" value="5" min="1" step="1">
             <button id="addPlayerBtn" class="add-player-btn">➕ 添加玩家</button>
             <button id="pkStartBtn" class="pk-start-btn">▶ 开始新对局</button>
-            <button id="pkResetBtn" class="pk-reset-btn">🔄 重置 & 洗牌</button>
+            <button id="pkResetBtn" class="pk-reset-btn" data-label="🔄 重来" title="所有玩家分数清零并重新洗牌">🔄 重来</button>
         </div>
         <div class="footer-note" style="background:transparent; border-top:none;">PK规则：每位玩家独立答题，限时10秒，答对+1分，答错-1分（最低0分）。每个玩家独立遍历所有单词，全部答完自动重置。</div>
     </div>
@@ -1478,6 +1688,7 @@
         currentCorrectValue = qData.correctAnswer;
         questionDisplay.innerText = qData.questionText;
         replayAnim(questionDisplay, 'q-in');
+        replayAnim(document.querySelector('.question-card'), 'q-lift');
         let html = '';
         const letters = ['A', 'B', 'C'];
         qData.options.forEach((opt, idx) => {
@@ -1502,6 +1713,8 @@
         // 用类而不是内联样式：高级渲染下才有对应的玻璃配色，也不会把内联色盖在毛玻璃上
         if (isCorrect) {
             score++; answeredCount++; updateSingleStats();
+            floatBadge(scoreSpan.parentElement, '+1', true);
+            replayAnim(scoreSpan.parentElement, 'bump');
             feedbackDiv.innerHTML = `✅ 漂亮！正确答案是 “${escapeHtml(currentCorrectValue)}” ✅ +1分`;
             feedbackDiv.classList.add('is-correct');
             replayAnim(btn, 'is-correct');
@@ -1599,10 +1812,12 @@
                     // 所以别在这里给选项标对错 —— 反馈靠卡片闪光 + 分数的加减 + 音效。
                     if (isCorrect) {
                         p.score = Math.min(p.score + 1, pkTargetScore);
+                        floatBadge(document.getElementById('score_' + p.idx), '+1', true);
                         sfx.playCorrect();
                         flashPlayerCard(p.idx, true);
                     } else {
                         p.score = Math.max(p.score - 1, 0);
+                        floatBadge(document.getElementById('score_' + p.idx), '-1', false);
                         sfx.playWrong();
                         flashPlayerCard(p.idx, false);
                     }
@@ -1729,7 +1944,11 @@
             const timerSpan = document.getElementById(`timer_${p.idx}`);
             if (qDiv) qDiv.innerText = "等待开始";
             if (optsDiv) optsDiv.innerHTML = "";
-            if (timerSpan) { timerSpan.innerText = "--s"; timerSpan.classList.remove('urgent'); }
+            if (timerSpan) {
+                timerSpan.innerText = "--s";
+                timerSpan.classList.remove('urgent');
+                timerSpan.style.removeProperty('--t');
+            }
         }
     }
 
@@ -1742,7 +1961,11 @@
             const timerSpan = document.getElementById(`timer_${p.idx}`);
             if (qDiv) qDiv.innerText = "等待开始";
             if (optsDiv) optsDiv.innerHTML = "";
-            if (timerSpan) { timerSpan.innerText = "--s"; timerSpan.classList.remove('urgent'); }
+            if (timerSpan) {
+                timerSpan.innerText = "--s";
+                timerSpan.classList.remove('urgent');
+                timerSpan.style.removeProperty('--t');
+            }
         }
     }
 
@@ -2062,6 +2285,56 @@
         return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
     }
 
+    const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // 重置这类「一点就没了」的操作改成点两次：第一次只是上膛，3 秒内不确认自动复原
+    function armConfirm(btn, action) {
+        if (btn.dataset.armed === '1') {
+            disarmConfirm(btn);
+            action();
+            return;
+        }
+        btn.dataset.armed = '1';
+        btn.classList.add('arming');
+        // 用 textContent 而不是 innerHTML：按下时刚插进去的水波元素会被一起换掉，
+        // 不会在复原时留下一个「幽灵水波」又飘一次
+        btn.textContent = '⚠️ 再点一次';
+        clearTimeout(btn._armTimer);
+        btn._armTimer = setTimeout(() => disarmConfirm(btn), 5000);
+    }
+    function disarmConfirm(btn) {
+        if (!btn || btn.dataset.armed !== '1') return;
+        btn.dataset.armed = '0';
+        btn.classList.remove('arming');
+        btn.textContent = btn.dataset.label || '';   // 原始文案写死在 HTML 的 data-label 上
+        clearTimeout(btn._armTimer);
+    }
+
+    // 点哪儿从哪儿荡开一圈水波
+    function rippleAt(el, ev) {
+        if (REDUCE_MOTION) return;
+        const r = el.getBoundingClientRect();
+        const d = Math.max(r.width, r.height) * 2.2;
+        const s = document.createElement('span');
+        s.className = 'ripple';
+        s.style.width = d + 'px';
+        s.style.height = d + 'px';
+        s.style.left = (ev.clientX - r.left - d / 2) + 'px';
+        s.style.top = (ev.clientY - r.top - d / 2) + 'px';
+        el.appendChild(s);
+        setTimeout(() => s.remove(), 620);
+    }
+
+    // 得分飘字
+    function floatBadge(host, text, good) {
+        if (!host || REDUCE_MOTION) return;
+        const s = document.createElement('span');
+        s.className = 'float-badge ' + (good ? 'good' : 'bad');
+        s.textContent = text;
+        host.appendChild(s);
+        setTimeout(() => s.remove(), 900);
+    }
+
     // 同一个元素要重放同一个动画，必须先摘掉类、强制重排一次，否则不会重播
     function replayAnim(el, cls) {
         if (!el) return;
@@ -2076,6 +2349,7 @@
         if (!el) return;
         el.innerText = time + 's';
         el.classList.toggle('urgent', time <= 3);
+        el.style.setProperty('--t', Math.max(0, Math.min(10, time)) / 10);   // 底部进度条
     }
 
     // ================================================================
@@ -2105,13 +2379,25 @@
     modeChiBtn.addEventListener('click', () => setTranslateMode('chi2eng'));
     modeEngBtn.addEventListener('click', () => setTranslateMode('eng2chi'));
     nextBtn.addEventListener('click', nextSingle);
-    resetBtn.addEventListener('click', resetSingle);
+    resetBtn.addEventListener('click', () => armConfirm(resetBtn, resetSingle));
     soundToggleBtn.addEventListener('click', toggleSound);
     boldToggleBtn.addEventListener('click', toggleBold);
     pkModeBtn.addEventListener('click', () => setPKMode(!isPKMode));
     addPlayerBtn.addEventListener('click', () => { if (isPKMode) addPlayer(); });
     pkStartBtn.addEventListener('click', () => { if (isPKMode) startPKGame(); });
-    pkResetBtn.addEventListener('click', () => { if (isPKMode) resetPKGame(); });
+    pkResetBtn.addEventListener('click', () => { if (isPKMode) armConfirm(pkResetBtn, resetPKGame); });
+
+    // 点别处就把「上膛」状态撤掉，免得过一会儿误触生效
+    document.addEventListener('click', (e) => {
+        [resetBtn, pkResetBtn].forEach(b => { if (b && !b.contains(e.target)) disarmConfirm(b); });
+    });
+
+    // 水波统一委托，省得每个按钮都挂一遍
+    document.addEventListener('pointerdown', (e) => {
+        const el = e.target.closest && e.target.closest('.option, .pk-option, button');
+        if (!el || el.disabled) return;
+        rippleAt(el, e);
+    });
     selectWordsBtn.addEventListener('click', openWordSelector);
     glassToggleBtn.addEventListener('click', toggleGlass);
 </script>
