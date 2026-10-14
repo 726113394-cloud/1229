@@ -1184,7 +1184,8 @@
 <body>
 <div class="app-container" id="app">
     <div class="selector-panel">
-        <div class="control-group"><label>📚 年级</label><select id="gradeSelect"></select></div>
+        <div class="control-group"><label>🏫 教材</label><select id="publisherSelect"><option value="pep">人教版</option><option value="jieli">接力版</option></select></div>
+            <div class="control-group"><label>📚 年级</label><select id="gradeSelect"></select></div>
         <div class="control-group"><label>📖 册别</label><select id="bookSelect"><option value="upper">上册</option><option value="lower">下册</option></select></div>
         <div class="control-group"><label>📌 单元</label><select id="unitSelect"></select></div>
         <div class="mode-switch"><span style="font-size:0.75rem; opacity:0.6;">🔄 模式：</span><button id="modeChi2EngBtn" class="mode-btn active">🇨🇳 中→英</button><button id="modeEng2ChiBtn" class="mode-btn">🇬🇧 英→中</button></div>
@@ -1299,7 +1300,8 @@
         return arr;
     });
     const FW_REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const FW_LOWPOWER = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
+    // ⚠️ 阈值别用 4（4 核机器很常见、Chrome 的 deviceMemory 还封顶 8），只留真小的 <=2
+    const FW_LOWPOWER = (navigator.hardwareConcurrency || 8) <= 2 || (navigator.deviceMemory || 8) <= 2;
     const FW_MAX = FW_REDUCED ? 0 : (FW_LOWPOWER ? 160 : 320);
     let particles = [];
     let animationId = null;
@@ -1592,8 +1594,86 @@
         return grade + '|' + book + '|' + unit;
     }
 
+    // ================================================================
+    //  教材切换用：接力出版社《英语》四年级上册（词汇表 I，第 62-64 页）
+    //  ⚠️ 人教版还是上面那份 wordBank，一个字不动；接力版平行放一份。
+    //  ⚠️ 唯一来源 `D:\Ollama\xiaoxiaole\vocab_src\jieli.json`，别手抄第二份。
+    //  ⚠️ 借用同一套三层结构：[年级键][册][单元]；接力版只有一个年级键「接力四上」，
+    //     册仍然写 upper（四年级上册）。
+    // ================================================================
+    const JIELI_BANK = {
+            "接力四上": {
+                upper: {
+                    "Unit 1": [
+                        { word: "these", meaning: "这些", bold: true },{ word: "wash", meaning: "洗", bold: true },{ word: "brush", meaning: "（用刷子）刷净", bold: false },
+                        { word: "wave", meaning: "挥动；挥舞", bold: false },{ word: "body", meaning: "身体", bold: true },{ word: "shake", meaning: "摇动；抖动", bold: false },
+                        { word: "feet", meaning: "脚（foot 的复数形式）", bold: false },{ word: "with", meaning: "用", bold: true },{ word: "eat", meaning: "吃", bold: true },
+                        { word: "listen", meaning: "听", bold: true },{ word: "write", meaning: "写", bold: true },{ word: "they", meaning: "他们；她们；它们", bold: true },
+                        { word: "clock", meaning: "时钟", bold: true },{ word: "blackboard", meaning: "黑板", bold: true },{ word: "out", meaning: "（从……里）出来", bold: true },
+                        { word: "say", meaning: "说", bold: true }
+                    ],
+                    "Unit 2": [
+                        { word: "behind", meaning: "在……后面", bold: true },{ word: "schoolbag", meaning: "书包", bold: true },{ word: "cup", meaning: "杯子", bold: true },
+                        { word: "move", meaning: "移动", bold: true },{ word: "excuse", meaning: "原谅", bold: false },{ word: "park", meaning: "公园", bold: true },
+                        { word: "along", meaning: "沿着", bold: false },{ word: "street", meaning: "街道", bold: true },{ word: "turn", meaning: "转向", bold: true },
+                        { word: "school", meaning: "学校", bold: true },{ word: "zoo", meaning: "动物园", bold: true },{ word: "hospital", meaning: "医院", bold: true },
+                        { word: "round", meaning: "转过来；调转方向", bold: false }
+                    ],
+                    "Unit 3": [
+                        { word: "sky", meaning: "天空", bold: false },{ word: "plane", meaning: "飞机", bold: true }
+                    ],
+                    "Unit 4": [
+                        { word: "weather", meaning: "天气", bold: true },{ word: "windy", meaning: "多风的", bold: true },{ word: "sunny", meaning: "晴朗的", bold: true },
+                        { word: "cool", meaning: "凉爽的", bold: true },{ word: "cloudy", meaning: "多云的", bold: true },{ word: "rainy", meaning: "下雨的", bold: false },
+                        { word: "warm", meaning: "暖和的", bold: true },{ word: "wear", meaning: "穿", bold: true },{ word: "shirt", meaning: "衬衫", bold: true },
+                        { word: "spring", meaning: "春天，春季", bold: true },{ word: "summer", meaning: "夏天，夏季", bold: true },{ word: "autumn", meaning: "秋天，秋季", bold: true },
+                        { word: "winter", meaning: "冬天，冬季", bold: true },{ word: "which", meaning: "哪一个", bold: true },{ word: "season", meaning: "季节", bold: true },
+                        { word: "best", meaning: "最", bold: true }
+                    ],
+                    "Unit 5": [
+                        { word: "family", meaning: "家，家庭", bold: true },{ word: "father", meaning: "父亲", bold: true },{ word: "Mrs.", meaning: "太太，夫人", bold: true },
+                        { word: "sister", meaning: "姐姐，妹妹", bold: true },{ word: "brother", meaning: "哥哥，弟弟", bold: true },{ word: "his", meaning: "他的", bold: true },
+                        { word: "cleaner", meaning: "清洁工", bold: false },{ word: "dancer", meaning: "舞蹈家", bold: false },{ word: "singer", meaning: "歌唱家，歌手", bold: false }
+                    ],
+                    "Unit 6": [
+                        { word: "light", meaning: "浅色的", bold: true },{ word: "clean", meaning: "干净的", bold: true },{ word: "boat", meaning: "小船", bold: true },
+                        { word: "grass", meaning: "草", bold: true },{ word: "skirt", meaning: "短裙", bold: true },{ word: "milk", meaning: "牛奶", bold: true },
+                        { word: "beef", meaning: "牛肉", bold: false },{ word: "chicken", meaning: "鸡肉", bold: true },{ word: "thirsty", meaning: "渴的", bold: false }
+                    ],
+                    "Unit 7": [
+                        { word: "eleven", meaning: "十一", bold: true },{ word: "twelve", meaning: "十二", bold: true },{ word: "thirteen", meaning: "十三", bold: true },
+                        { word: "fourteen", meaning: "十四", bold: true },{ word: "fifteen", meaning: "十五", bold: true },{ word: "sixteen", meaning: "十六", bold: true },
+                        { word: "seventeen", meaning: "十七", bold: true },{ word: "eighteen", meaning: "十八", bold: true },{ word: "nineteen", meaning: "十九", bold: true },
+                        { word: "twenty", meaning: "二十", bold: true },{ word: "balloon", meaning: "气球", bold: false },{ word: "win", meaning: "赢，获胜", bold: true },
+                        { word: "many", meaning: "许多", bold: true },{ word: "our", meaning: "我们的", bold: true },{ word: "thirty", meaning: "三十", bold: true },
+                        { word: "study", meaning: "学习", bold: true },{ word: "fork", meaning: "叉子", bold: false },{ word: "spoon", meaning: "勺，匙，调羹", bold: false },
+                        { word: "pear", meaning: "梨", bold: false },{ word: "grape", meaning: "葡萄", bold: true },{ word: "tomato", meaning: "西红柿", bold: true }
+                    ],
+                    "Unit 8": [
+                        { word: "animal", meaning: "动物", bold: true },{ word: "those", meaning: "那些", bold: true },{ word: "duck", meaning: "鸭子", bold: true },
+                        { word: "tiger", meaning: "老虎", bold: true }
+                    ],
+                    "附 · 词组": [
+                        { word: "nature park", meaning: "自然公园", bold: false },{ word: "go out", meaning: "出去", bold: false },{ word: "come in", meaning: "进来", bold: false },
+                        { word: "put up", meaning: "举起来", bold: false },{ word: "turn right", meaning: "向右转", bold: false },{ word: "turn left", meaning: "向左转", bold: false },
+                        { word: "make new friends", meaning: "结交新朋友", bold: false }
+                    ],
+                },
+            },
+    };
+
+    const PUBLISHERS = [{ id: 'pep', name: '人教版' }, { id: 'jieli', name: '接力版' }];
+    const LS_PUBLISHER = 'match.publisher';       // ⚠️ 键名带工具前缀
+    let publisher = (function () {
+        try { return lsGet(LS_PUBLISHER) === 'jieli' ? 'jieli' : 'pep'; }
+        catch (e) { return 'pep'; }
+    })();
+    function activeBank() { return publisher === 'jieli' ? JIELI_BANK : wordBank; }
+    function gradeLabel(g) { return g === '接力四上' ? '接力·四年级上册' : (g + '年级'); }
+    function bookLabel(b) { return b === 'lower' ? '下册' : '上册'; }
+
     function getCurrentWordList(grade, book, unit) {
-        let words = wordBank[grade]?.[book]?.[unit] || [];
+        let words = activeBank()[grade]?.[book]?.[unit] || [];
         if (boldOnly) words = words.filter(w => w.bold === true);
         const selectedSet = unitSelection[selKey(grade, book, unit)];
         if (selectedSet && selectedSet.size > 0) {
@@ -1603,7 +1683,8 @@
     }
 
     function getUnits(grade, book) {
-        const units = wordBank[grade]?.[book] ? Object.keys(wordBank[grade][book]) : [];
+        const bk = activeBank()[grade]?.[book];
+        const units = bk ? Object.keys(bk) : [];
         return units.sort();
     }
 
@@ -2059,7 +2140,7 @@
     function renderWordCheckboxes() {
         const container = document.getElementById('wordCheckboxList');
         const unit = currentUnit;
-        let words = wordBank[currentGrade]?.[currentBook]?.[unit] || [];
+        let words = activeBank()[currentGrade]?.[currentBook]?.[unit] || [];
         let selectedSet = unitSelection[selKey(currentGrade, currentBook, unit)] || new Set();
         container.innerHTML = '';
         let count = 0;
@@ -2219,8 +2300,9 @@
     //  UI 联动
     // ================================================================
     function populateGrades() {
-        const grades = Object.keys(wordBank);
-        gradeSelect.innerHTML = grades.map(g => `<option value="${g}">${g}年级</option>`).join('');
+        const grades = Object.keys(activeBank());
+        gradeSelect.innerHTML = grades.map(g => `<option value="${g}">${gradeLabel(g)}</option>`).join('');
+        if (grades.indexOf(currentGrade) < 0) currentGrade = grades[0] || currentGrade;
         gradeSelect.value = currentGrade;
         updateUnits();
         gradeSelect.addEventListener('change', () => {
@@ -2237,6 +2319,31 @@
             currentUnit = unitSelect.value;
             loadUnit();
         });
+    }
+
+    /* ★ 换教材：重建「年级」和「册」两级（⚠️ **不要**再调 populateGrades ——
+       它会重复绑定 change，于是切一次会 loadUnit 两遍）。默认人教版时一个字节都不动。 */
+    function setPublisher(p) {
+        publisher = (p === 'jieli') ? 'jieli' : 'pep';
+        try { lsSet(LS_PUBLISHER, publisher); } catch (e) {}
+        const bank = activeBank();
+        const gk = Object.keys(bank);
+        gradeSelect.innerHTML = gk.map(g => `<option value="${g}">${gradeLabel(g)}</option>`).join('');
+        currentGrade = gk[0] || currentGrade;
+        gradeSelect.value = currentGrade;
+        const bk = Object.keys(bank[currentGrade] || {});
+        bookSelect.innerHTML = bk.map(b => `<option value="${b}">${bookLabel(b)}</option>`).join('');
+        currentBook = bk[0] || currentBook;
+        bookSelect.value = currentBook;
+        updateUnits();
+        loadUnit();
+    }
+    function initPublisher() {
+        const sel = document.getElementById('publisherSelect');
+        if (!sel) return;
+        sel.value = publisher;
+        sel.addEventListener('change', () => setPublisher(sel.value));
+        if (publisher !== 'pep') setPublisher(publisher);   // 存档是接力版才重建
     }
 
     function updateUnits() {
@@ -2367,6 +2474,8 @@
     applyGlass(lsGet(LS_GLASS, 'glassEnabled') === 'true');
 
     populateGrades();
+
+    initPublisher();
     buildSingleQueue();
     refreshSingleQuestion();
     soundToggleBtn.textContent = "🔊 音效开启";
